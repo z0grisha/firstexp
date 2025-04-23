@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Крестики-нолики</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: #e0e0e0;
+      font-size: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cell:hover {
+      background: #d5d5d5;
+    }
+    .info {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Крестики-нолики</h1>
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+  <div class="info" id="info">Ходит: X</div>
+  <button onclick="resetBoard()">Сбросить</button>
+
+  <script>
+    const cells = document.querySelectorAll('.cell');
+    const info = document.getElementById('info');
+    let currentPlayer = 'X';
+    let board = Array(9).fill('');
+
+    const winCombos = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
+    function checkWin() {
+      return winCombos.some(combo => {
+        const [a, b, c] = combo;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+      });
+    }
+
+    function handleClick(e) {
+      const index = e.target.dataset.index;
+      if (board[index] !== '') return;
+      board[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+      if (checkWin()) {
+        info.textContent = `Победил: ${currentPlayer}!`;
+        cells.forEach(c => c.removeEventListener('click', handleClick));
+      } else if (board.every(cell => cell !== '')) {
+        info.textContent = 'Ничья!';
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        info.textContent = `Ходит: ${currentPlayer}`;
+      }
+    }
+
+    function resetBoard() {
+      board.fill('');
+      currentPlayer = 'X';
+      info.textContent = 'Ходит: X';
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.addEventListener('click', handleClick);
+      });
+    }
+
+    resetBoard();
+  </script>
+</body>
+</html>
