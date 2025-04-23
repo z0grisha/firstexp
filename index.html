@@ -1,99 +1,226 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Шуточный Компилятор</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Крестики-нолики</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background: #1e1e1e;
-      color: #f1f1f1;
-      font-family: monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 30px 15px;
+      background-color: #f7f7f7;
+      transition: background-color 0.3s, color 0.3s;
     }
-
     h1 {
-      margin: 20px 0;
+      margin-bottom: 30px;
     }
-
-    .container {
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 5px;
+      justify-content: center;
+      margin: 0 auto 20px;
+      max-width: 300px;
+    }
+    .cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #e0e0e0;
+      font-size: clamp(30px, 8vw, 60px);
       display: flex;
-      flex-direction: row;
-      width: 90%;
-      max-width: 1200px;
-      height: 60%;
-      margin-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
     }
-
-    textarea, .output {
-      flex: 1;
-      margin: 10px;
-      padding: 15px;
-      background: #252526;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      resize: none;
-      font-size: 16px;
-      line-height: 1.4;
-      overflow: auto;
+    .cell:hover {
+      background: #d5d5d5;
     }
-
-    .output {
-      white-space: pre-wrap;
+    .cell.winning {
+      background: #90ee90 !important;
+      animation: flash 0.4s ease-in-out 2;
     }
-
+    @keyframes flash {
+      0% { background-color: #90ee90; }
+      50% { background-color: #c1ffc1; }
+      100% { background-color: #90ee90; }
+    }
+    .info {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+    .score {
+      margin-top: 10px;
+      font-size: 18px;
+    }
     button {
-      background: #0e639c;
-      color: white;
-      border: none;
-      padding: 12px 24px;
+      padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.3s;
+      margin-top: 20px;
     }
 
-    button:hover {
-      background: #1177bb;
+    body.dark {
+      background-color: #121212;
+      color: #eee;
+    }
+    body.dark .cell {
+      background-color: #333;
+      color: #fff;
+    }
+    body.dark .cell:hover {
+      background-color: #444;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-        height: auto;
-      }
+    #theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
 
-      textarea, .output {
-        height: 200px;
-      }
+    #theme-toggle:hover {
+      transform: scale(1.2);
     }
   </style>
 </head>
 <body>
-  <h1>💻 Шуточный Компилятор 3000</h1>
-  <div class="container">
-    <textarea id="code" placeholder="Введите свой код здесь..."></textarea>
-    <div class="output" id="output">👉 Здесь появится магия после компиляции...</div>
+  <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+  <h1>Крестики-нолики</h1>
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
   </div>
-  <button id="compile-btn">Компилировать</button>
+  <div class="info" id="info">Ходит: X</div>
+  <div class="score" id="score">Побед X: 0 | Побед O: 0 | Ничьих: 0</div>
+  <button onclick="resetBoard()">Ещё</button>
+
+  <audio id="click-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4df0493c6a.mp3?filename=interface-click-124467.mp3"></audio>
 
   <script>
-    const jokes = [
-      "🧠 Компиляция завершена успешно:\nНо крокодил не смог понять,\nЗачем нам Node и как нажать.",
-      "🔥 Ошибка на строке 42:\nБобёр забыл поставить точку с запятой,\nТеперь живёт он с HTML судьбой.",
-      "✅ Сборка прошла, но...\nФункция ушла в монастырь\nИ больше не возвращается.",
-      "🚀 Оптимизация кода:\nУдалён весь проект\nТеперь точно багов нет!",
-      "🐸 Пойман exception:\nНа болоте в коде сидит лягушка,\nПишет Python, пьёт из кружки."
+    const cells = document.querySelectorAll('.cell');
+    const info = document.getElementById('info');
+    const clickSound = document.getElementById('click-sound');
+    clickSound.volume = 0.5;
+    let currentPlayer = 'X';
+    let board = Array(9).fill('');
+    let scoreX = 0;
+    let scoreO = 0;
+    let draws = 0;
+
+    const winCombos = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
     ];
 
-    document.getElementById("compile-btn").addEventListener("click", function() {
-      const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
-      document.getElementById("output").textContent = randomJoke;
+    function highlightWinning(combo) {
+      combo.forEach(i => {
+        cells[i].classList.add('winning');
+      });
+    }
+
+    function checkWin() {
+      return winCombos.find(combo => {
+        const [a, b, c] = combo;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+      });
+    }
+
+    function updateScore() {
+      document.getElementById('score').textContent =
+        `Побед X: ${scoreX} | Побед O: ${scoreO} | Ничьих: ${draws}`;
+    }
+
+    function handleClick(e) {
+      const index = e.target.dataset.index;
+      if (board[index] !== '') return;
+      board[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+      clickSound.play();
+      const winningCombo = checkWin();
+      if (winningCombo) {
+        info.textContent = `Победил: ${currentPlayer}!`;
+        if (currentPlayer === 'X') scoreX++;
+        else scoreO++;
+        updateScore();
+        highlightWinning(winningCombo);
+        cells.forEach(c => c.removeEventListener('click', handleClick));
+      } else if (board.every(cell => cell !== '')) {
+        info.textContent = 'Ничья!';
+        draws++;
+        updateScore();
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        info.textContent = `Ходит: ${currentPlayer}`;
+        if (currentPlayer === 'O') {
+          setTimeout(botMove, 300);
+        }
+      }
+    }
+
+    function resetBoard() {
+      board.fill('');
+      currentPlayer = 'X';
+      info.textContent = 'Ходит: X';
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('winning');
+        cell.addEventListener('click', handleClick);
+      });
+    }
+
+    function botMove() {
+      for (let combo of winCombos) {
+        const [a, b, c] = combo;
+        if (board[a] === 'O' && board[b] === 'O' && board[c] === '') return clickCell(c);
+        if (board[a] === 'O' && board[b] === '' && board[c] === 'O') return clickCell(b);
+        if (board[a] === '' && board[b] === 'O' && board[c] === 'O') return clickCell(a);
+      }
+      for (let combo of winCombos) {
+        const [a, b, c] = combo;
+        if (board[a] === 'X' && board[b] === 'X' && board[c] === '') return clickCell(c);
+        if (board[a] === 'X' && board[b] === '' && board[c] === 'X') return clickCell(b);
+        if (board[a] === '' && board[b] === 'X' && board[c] === 'X') return clickCell(a);
+      }
+      const emptyCells = board.map((val, i) => val === '' ? i : null).filter(v => v !== null);
+      if (emptyCells.length === 0) return;
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      clickCell(randomIndex);
+    }
+
+    function clickCell(index) {
+      const cell = document.querySelector(`[data-index='${index}']`);
+      if (cell) cell.click();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      if (document.body.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark');
+      }
+      resetBoard();
     });
   </script>
 </body>
