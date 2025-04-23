@@ -56,11 +56,26 @@
     body.dark .cell:hover {
       background-color: #444;
     }
+
+    #theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #theme-toggle:hover {
+      transform: scale(1.2);
+    }
   </style>
 </head>
 <body>
+  <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
   <h1>Крестики-нолики</h1>
-  <button onclick="toggleTheme()">🌓 Переключить тему</button>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div>
     <div class="cell" data-index="1"></div>
