@@ -9,6 +9,7 @@
       text-align: center;
       padding: 50px;
       background-color: #f7f7f7;
+      transition: background-color 0.3s, color 0.3s;
     }
     h1 {
       margin-bottom: 30px;
@@ -43,10 +44,23 @@
       cursor: pointer;
       margin-top: 20px;
     }
+
+    body.dark {
+      background-color: #121212;
+      color: #eee;
+    }
+    body.dark .cell {
+      background-color: #333;
+      color: #fff;
+    }
+    body.dark .cell:hover {
+      background-color: #444;
+    }
   </style>
 </head>
 <body>
   <h1>Крестики-нолики</h1>
+  <button onclick="toggleTheme()">🌓 Переключить тему</button>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div>
     <div class="cell" data-index="1"></div>
@@ -106,7 +120,22 @@
       });
     }
 
-    resetBoard();
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      if (document.body.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark');
+      }
+      resetBoard();
+    });
   </script>
 </body>
 </html>
